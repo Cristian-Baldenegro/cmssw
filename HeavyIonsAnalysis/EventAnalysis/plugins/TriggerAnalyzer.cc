@@ -126,10 +126,29 @@ void TriggerAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
     edm::TriggerNames const& triggerNames = iEvent.triggerNames(*hltresults);
 
     // 1st event : Book as many branches as trigger paths provided in the input...
+    std::vector<TString> select_triggers = {
+      "HLT_HIL1DoubleMu0_v1","HLT_HIL1DoubleMuOpen_v1",
+      "HLT_HIAK4PFJet30_v1", "HLT_HIAK4PFJet40_v1", "HLT_HIAK4PFJet60_v1", 
+      "HLT_HIAK4PFJet80_v1", "HLT_HIAK4PFJet100_v1",
+      "HLT_ZeroBias_v", "HLT_ZeroBias_Beamspot_v",
+      "HLT_HIZeroBias_part0_v", "HLT_HIZeroBias_part1_v", "HLT_HIZeroBias_part2_v",
+      "HLT_HIZeroBias_part3_v", "HLT_HIZeroBias_part4_v", "HLT_HIZeroBias_part5_v",
+      "HLT_HIZeroBias_part6_v", "HLT_HIZeroBias_part7_v", "HLT_HIZeroBias_part8_v",
+      "HLT_HIZeroBias_part9_v", "HLT_HIZeroBias_part10_v", "HLT_HIZeroBias_part11_v"
+    };
+
     if (HltEvtCnt == 0) {
       int itdum = 0;
       for (auto const& dummy : hltdummies) {
         TString dummyname(dummy.data());
+
+        // Select triggers
+        bool keep = false;
+        for (TString trig : select_triggers) {
+          if (dummyname.Contains(trig)) keep = true;
+        }
+        if (!keep) continue;
+        
         t_->Branch(dummyname, hltflag + itdum, dummyname + "/I");
         t_->Branch(dummyname + "_Prescl", hltPrescl + itdum, dummyname + "_Prescl/I");
         pathtoindex[dummy] = itdum;
@@ -140,6 +159,16 @@ void TriggerAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
         const std::string& trigname = triggerNames.triggerName(itrig);
         if (pathtoindex.find(trigname) == pathtoindex.end()) {
           TString hltname = trigname;
+
+          // if (TString(trigname).Contains("PF")) std::cout << trigname << std::endl;
+
+          // Select triggers
+          bool keep = false;
+          for (TString trig : select_triggers) {
+            if (hltname.Contains(trig)) keep = true;
+          }
+          if (!keep) continue;
+
           t_->Branch(hltname, hltflag + itdum + itrig, hltname + "/I");
           t_->Branch(hltname + "_Prescl", hltPrescl + itdum + itrig, hltname + "_Prescl/I");
           pathtoindex[trigname] = itdum + itrig;
@@ -178,32 +207,32 @@ void TriggerAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
     }
 
     // 1st event : Book as many branches as trigger paths provided in the input...
-    if (L1EvtCnt == 0) {
-      int itdum = 0;
-      for (auto const& dummy : l1dummies) {
-        TString dummyname(dummy.data());
-        t_->Branch(dummyname, l1flag + itdum, dummyname + "/I");
-        t_->Branch(dummyname + "_Prescl", l1Prescl + itdum, dummyname + "_Prescl/I");
-        pathtoindex[dummy] = itdum;
-        ++itdum;
-      }
+    // if (L1EvtCnt == 0) {
+    //   int itdum = 0;
+    //   for (auto const& dummy : l1dummies) {
+    //     TString dummyname(dummy.data());
+    //     t_->Branch(dummyname, l1flag + itdum, dummyname + "/I");
+    //     t_->Branch(dummyname + "_Prescl", l1Prescl + itdum, dummyname + "_Prescl/I");
+    //     pathtoindex[dummy] = itdum;
+    //     ++itdum;
+    //   }
 
-      int il1 = 0;
-      // get the bit/name association
-      for (auto const& keyval : menu->getAlgorithmMap()) {
-        std::string const& trigname = keyval.second.getName();
+    //   int il1 = 0;
+    //   // get the bit/name association
+    //   for (auto const& keyval : menu->getAlgorithmMap()) {
+    //     std::string const& trigname = keyval.second.getName();
 
-        if (pathtoindex.find(trigname) == pathtoindex.end()) {
-          TString l1name = trigname;
-          t_->Branch(l1name, l1flag + itdum + il1, l1name + "/I");
-          t_->Branch(l1name + "_Prescl", l1Prescl + itdum + il1, l1name + "_Prescl/I");
-          pathtoindex[trigname] = itdum + il1;
-          ++il1;
-        }
-      }  // end algo Map
+    //     if (pathtoindex.find(trigname) == pathtoindex.end()) {
+    //       TString l1name = trigname;
+    //       t_->Branch(l1name, l1flag + itdum + il1, l1name + "/I");
+    //       t_->Branch(l1name + "_Prescl", l1Prescl + itdum + il1, l1name + "_Prescl/I");
+    //       pathtoindex[trigname] = itdum + il1;
+    //       ++il1;
+    //     }
+    //   }  // end algo Map
 
-      L1EvtCnt++;
-    }  // end l1evtCnt=0
+    //   L1EvtCnt++;
+    // }  // end l1evtCnt=0
 
     GlobalAlgBlk const& result = l1results->at(0, 0);
 

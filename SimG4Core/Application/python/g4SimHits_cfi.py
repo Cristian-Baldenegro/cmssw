@@ -180,7 +180,9 @@ g4SimHits = cms.EDProducer("OscarMTProducer",
         MinPhiCut = cms.double(-3.14159265359), ## (radians)
         MaxPhiCut = cms.double(3.14159265359),  ## according to CMS conventions
         ApplyLumiMonitorCuts = cms.bool(False), ## primary for lumi monitors
+        FixOfFinalStateRadiation = cms.bool(False),
         Verbosity = cms.untracked.int32(0),
+        IsSlepton = cms.bool(False),
         PDGselection = cms.PSet(
             PDGfilterSel = cms.bool(False),        ## filter out unwanted particles
             PDGfilter = cms.vint32(21,1,2,3,4,5,6) ## list of unwanted particles (gluons and quarks)
@@ -544,3 +546,16 @@ from Configuration.Eras.Modifier_phase2_timing_cff import phase2_timing
 phase2_timing.toModify( g4SimHits.ECalSD,
                              StoreLayerTimeSim = cms.untracked.bool(True),
                              TimeSliceUnit = cms.double(0.001) )
+##
+## Enable handling of final state radiation for Run 2
+##
+from Configuration.ProcessModifiers.run2_final_state_rad_cff import run2_final_state_rad
+run2_final_state_rad.toModify( g4SimHits, Generator = dict( FixOfFinalStateRadiation = True ) )
+
+##
+## Fix for long-lived slepton simulation
+##
+from Configuration.ProcessModifiers.fixLongLivedSleptonSim_cff import fixLongLivedSleptonSim
+fixLongLivedSleptonSim.toModify( g4SimHits,
+                                 Generator = dict(IsSlepton = True)
+)

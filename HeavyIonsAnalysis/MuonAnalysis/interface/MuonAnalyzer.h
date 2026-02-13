@@ -116,6 +116,7 @@ private:
   std::vector<float> recoPFNeuIso_;
   std::vector<float> recoPFPUIso_;
 
+  std::vector<bool> recoIDHybridSoft_;
   std::vector<bool> recoIDSoft_;
   std::vector<bool> recoIDLoose_;
   std::vector<bool> recoIDMedium_;

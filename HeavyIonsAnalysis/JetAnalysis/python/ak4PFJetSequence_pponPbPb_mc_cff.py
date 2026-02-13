@@ -13,5 +13,6 @@ ak4PFJetAnalyzer = inclusiveJetAnalyzer.clone(
     jetName = cms.untracked.string("ak4PF"),
     genPtMin = cms.untracked.double(5),
     hltTrgResults = cms.untracked.string('TriggerResults::'+'HISIGNAL'),
+    doTracks = cms.untracked.bool(True)
     )
 

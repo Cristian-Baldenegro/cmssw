@@ -3,8 +3,10 @@ import FWCore.ParameterSet.Config as cms
 from RecoBTag.ImpactParameter.pfImpactParameterTagInfos_cfi import pfImpactParameterTagInfos
 pfImpactParameterTagInfos.jets = "slimmedJets"
 pfImpactParameterTagInfos.candidates = "packedPFCandidates"
-pfImpactParameterTagInfos.primaryVertex = "offlineSlimmedPrimaryVerticesRecovery"
+# pfImpactParameterTagInfos.primaryVertex = "offlineSlimmedPrimaryVerticesRecovery" # original 
+pfImpactParameterTagInfos.primaryVertex = cms.InputTag("offlineSlimmedPrimaryVertices")
 from RecoBTag.SecondaryVertex.pfSecondaryVertexTagInfos_cfi import pfSecondaryVertexTagInfos
+
 # leave IVF workflow commented out for reference -matt
 #from RecoVertex.AdaptiveVertexFinder.inclusiveVertexing_cff import inclusiveCandidateVertexFinder
 #from RecoVertex.AdaptiveVertexFinder.inclusiveVertexing_cff import candidateVertexMerger
@@ -15,6 +17,7 @@ from RecoBTag.SecondaryVertex.pfSecondaryVertexTagInfos_cfi import pfSecondaryVe
 #inclusiveCandidateVertexFinder.tracks= "packedPFCandidates"
 #candidateVertexArbitrator.tracks = "packedPFCandidates"
 #candidateVertexArbitrator.primaryVertices = "offlineSlimmedPrimaryVerticesRecovery"
+
 from TrackingTools.TransientTrack.TransientTrackBuilder_cfi import *
 from RecoBTau.JetTagComputer.jetTagRecord_cfi import *
 from RecoBTag.ImpactParameter.candidateJetProbabilityComputer_cfi import  *

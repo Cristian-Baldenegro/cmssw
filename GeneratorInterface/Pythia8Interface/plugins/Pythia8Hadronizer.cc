@@ -18,7 +18,9 @@ using namespace Pythia8;
 
 #include "GeneratorInterface/Pythia8Interface/interface/Py8InterfaceBase.h"
 
-#include "GeneratorInterface/Pythia8Interface/plugins/ReweightUserHooks.h"
+#include "ReweightUserHooks.h"
+#include "GeneratorInterface/Pythia8Interface/interface/CustomHook.h"
+#include "TopRecoilHook.h"
 
 // PS matchning prototype
 //
@@ -150,6 +152,12 @@ private:
 
   //PT filter hook
   std::unique_ptr<PTFilterHook> fPTFilterHook;
+
+  //Generic customized hooks vector
+  std::unique_ptr<MultiUserHook> fCustomHooksVector;
+
+  //RecoilToTop userhook
+  std::shared_ptr<TopRecoilHook> fTopRecoilHook;
 
   int EV1_nFinal;
   bool EV1_vetoOn;
@@ -313,6 +321,16 @@ Pythia8Hadronizer::Pythia8Hadronizer(const edm::ParameterSet &params)
                                                    0));
   }
 
+  fCustomHooksVector.reset(new MultiUserHook);
+  if (params.exists("UserCustomization")) {
+    const std::vector<edm::ParameterSet> userParams =
+        params.getParameter<std::vector<edm::ParameterSet>>("UserCustomization");
+    for (const auto &pluginParams : userParams) {
+      fCustomHooksVector->addHook(
+          CustomHookFactory::get()->create(pluginParams.getParameter<std::string>("pluginName"), pluginParams));
+    }
+  }
+
   if (params.exists("VinciaPlugin")) {
     fMasterGen.reset(new Pythia);
     fvincia.reset(new Vincia::VinciaPlugin(fMasterGen.get()));
@@ -395,6 +413,14 @@ bool Pythia8Hadronizer::initializeForInternalPartons() {
     fMultiUserHook->addHook(fPowhegHooksBB4L.get());
   }
 
+  bool TopRecoilHook1 = fMasterGen->settings.flag("TopRecoilHook:doTopRecoilIn");
+  if (TopRecoilHook1) {
+    edm::LogInfo("Pythia8Interface") << "Turning on RecoilToTop hook from Pythia8Interface";
+    if (!fTopRecoilHook.get())
+      fTopRecoilHook.reset(new TopRecoilHook());
+    fMultiUserHook->addHook(fTopRecoilHook.get());
+  }
+
   //adapted from main89.cc in pythia8 examples
   bool internalMatching = fMasterGen->settings.flag("JetMatching:merge");
   bool internalMerging = !(fMasterGen->settings.word("Merging:Process") == "void");
@@ -444,6 +470,13 @@ bool Pythia8Hadronizer::initializeForInternalPartons() {
   if (PTFilter) {
     fPTFilterHook.reset(new PTFilterHook);
     fMultiUserHook->addHook(fPTFilterHook.get());
+  }
+
+  if (fCustomHooksVector->nHooks() > 0) {
+    edm::LogInfo("Pythia8Interface") << "Adding customized user hooks";
+    for (const auto &fUserHook : fCustomHooksVector.get()->hooks()) {
+      fMultiUserHook->addHook(fUserHook);
+    }
   }
 
   if (fMultiUserHook->nHooks() > 0) {
@@ -514,6 +547,13 @@ bool Pythia8Hadronizer::initializeForExternalPartons() {
     fMultiUserHook->addHook(fEmissionVetoHook1.get());
   }
 
+  if (fCustomHooksVector->nHooks() > 0) {
+    edm::LogInfo("Pythia8Interface") << "Adding customized user hooks";
+    for (const auto &fUserHook : fCustomHooksVector.get()->hooks()) {
+      fMultiUserHook->addHook(fUserHook);
+    }
+  }
+
   if (fMasterGen->settings.mode("POWHEG:veto") > 0 || fMasterGen->settings.mode("POWHEG:MPIveto") > 0) {
     if (fJetMatchingHook.get() || fEmissionVetoHook1.get())
       throw edm::Exception(edm::errors::Configuration, "Pythia8Interface")
@@ -538,6 +578,14 @@ bool Pythia8Hadronizer::initializeForExternalPartons() {
     edm::LogInfo("Pythia8Interface") << "Turning on BB4l hook from CMSSW Pythia8Interface";
     fPowhegHooksBB4L.reset(new PowhegHooksBB4L());
     fMultiUserHook->addHook(fPowhegHooksBB4L.get());
+  }
+
+  bool TopRecoilHook1 = fMasterGen->settings.flag("TopRecoilHook:doTopRecoilIn");
+  if (TopRecoilHook1) {
+    edm::LogInfo("Pythia8Interface") << "Turning on RecoilToTop hook from Pythia8Interface";
+    if (!fTopRecoilHook.get())
+      fTopRecoilHook.reset(new TopRecoilHook());
+    fMultiUserHook->addHook(fTopRecoilHook.get());
   }
 
   //adapted from main89.cc in pythia8 examples

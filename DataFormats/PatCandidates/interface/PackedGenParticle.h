@@ -36,20 +36,22 @@ namespace pat {
     /// default constructor  
     PackedGenParticle()
     : packedPt_(0), packedY_(0), packedPhi_(0), packedM_(0), 
-    p4_(nullptr), p4c_(nullptr), vertex_(0,0,0),  pdgId_(0), charge_(0) { }
+    p4_(nullptr), p4c_(nullptr), vertex_(0,0,0),  pdgId_(0), charge_(0), status_(1) { }
+
     explicit PackedGenParticle( const reco::GenParticle & c)
     : p4_(new PolarLorentzVector(c.pt(), c.eta(), c.phi(), c.mass())), p4c_( new LorentzVector(*p4_)), vertex_(0,0,0), pdgId_(c.pdgId()), charge_(c.charge()), mother_(c.motherRef(0)),
-      statusFlags_(c.statusFlags()) { pack(); }
+      statusFlags_(c.statusFlags()), status_(c.status()) { pack(); }
+    
     explicit PackedGenParticle( const reco::GenParticle & c, const edm::Ref<reco::GenParticleCollection> &  mother)
     : p4_(new PolarLorentzVector(c.pt(), c.eta(), c.phi(), c.mass())), p4c_(new LorentzVector(*p4_)), vertex_(0,0,0), pdgId_(c.pdgId()), charge_(c.charge()), mother_(mother),
-      statusFlags_(c.statusFlags()) { pack(); }
+      statusFlags_(c.statusFlags()), status_(c.status()) { pack(); }
 
     PackedGenParticle(const PackedGenParticle& iOther)
     : packedPt_(iOther.packedPt_), packedY_(iOther.packedY_), packedPhi_(iOther.packedPhi_), packedM_(iOther.packedM_),
       p4_(nullptr),p4c_(nullptr),
       vertex_(iOther.vertex_), dxy_(iOther.dxy_), dz_(iOther.dz_),dphi_(iOther.dphi_),
       pdgId_(iOther.pdgId_),charge_(iOther.charge_),mother_(iOther.mother_),
-      statusFlags_(iOther.statusFlags_) {
+      statusFlags_(iOther.statusFlags_), status_(iOther.status_) {
       if(iOther.p4c_) {
         p4_.store( new PolarLorentzVector(*iOther.p4_) );
         p4c_.store( new LorentzVector(*iOther.p4c_) );
@@ -61,7 +63,7 @@ namespace pat {
       p4_(nullptr),p4c_(nullptr),
       vertex_(std::move(iOther.vertex_)), dxy_(iOther.dxy_), dz_(iOther.dz_),dphi_(iOther.dphi_),
       pdgId_(iOther.pdgId_),charge_(iOther.charge_),mother_(std::move(iOther.mother_)),
-      statusFlags_(iOther.statusFlags_) {
+      statusFlags_(iOther.statusFlags_), status_(iOther.status_) {
       if(iOther.p4c_) {
         p4_.store( p4_.exchange(nullptr) );
         p4c_.store( p4c_.exchange(nullptr) );
@@ -89,6 +91,7 @@ namespace pat {
         charge_ = iOther.charge_;
         mother_ = std::move(iOther.mother_);
         statusFlags_ = iOther.statusFlags_;
+        status_ = iOther.status_;
       }
       return *this;
     }
@@ -245,9 +248,9 @@ namespace pat {
     // set PDG identifier                                                                 
     void setPdgId( int pdgId ) override   { pdgId_ = pdgId; }
     /// status word                                                                       
-    int status() const override   { return 1; } /*FIXME*/
+    int status() const override   { return status_; } /*FIXME*/ // Fixed by Lida
     /// set status word                                                                   
-    void setStatus( int status ) override {} /*FIXME*/
+    void setStatus( int status ) override { status_ = status; } /*FIXME*/ // Fixed by Lida
     /// long lived flag                                                                   
     static const unsigned int longLivedTag = 0; /*FIXME*/
     /// set long lived flag                                                               
@@ -366,6 +369,8 @@ namespace pat {
     reco::GenParticleRef mother_;
     //status flags
     reco::GenStatusFlags statusFlags_;
+    /// Status -- Addition by Lida
+    int status_;
 
     /// check overlap with another Candidate                                              
     bool overlap( const reco::Candidate & ) const override;

@@ -10,8 +10,10 @@
 <use name="Geometry/Records"/>
 <use name="DataFormats/HepMCCandidate"/>
 <use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/HeavyIonEvent"/>
+<use name="AnalysisDataFormats/TrackInfo"/>
 <use name="RecoJets/JetProducers"/>
 <use name="RecoHI/HiJetAlgos"/>
-<use name="DataFormats/HeavyIonEvent"/>
 <use name="CondFormats/JetMETObjects"/>
+<use name="JetMETCorrections/Modules"/>
 <flags EDM_PLUGIN="1"/>

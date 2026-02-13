@@ -68,6 +68,7 @@ MuonAnalyzer::MuonAnalyzer(const edm::ParameterSet& ps) {
   tree_->Branch("recoPFPhoIso", &recoPFPhoIso_);
   tree_->Branch("recoPFNeuIso", &recoPFNeuIso_);
   tree_->Branch("recoPFPUIso", &recoPFPUIso_);
+  tree_->Branch("recoIDHybridSoft", &recoIDHybridSoft_);
   tree_->Branch("recoIDSoft", &recoIDSoft_);
   tree_->Branch("recoIDLoose", &recoIDLoose_);
   tree_->Branch("recoIDMedium", &recoIDMedium_);
@@ -154,6 +155,7 @@ void MuonAnalyzer::analyze(const edm::Event& e, const edm::EventSetup& es) {
   recoPFPhoIso_.clear();
   recoPFNeuIso_.clear();
   recoPFPUIso_.clear();
+  recoIDHybridSoft_.clear();
   recoIDSoft_.clear();
   recoIDLoose_.clear();
   recoIDMedium_.clear();
@@ -313,7 +315,7 @@ void MuonAnalyzer::analyze(const edm::Event& e, const edm::EventSetup& es) {
       recoIP3DErr_.push_back(recoIP3DErr);
 
       // inner track info
-      if (mu.innerTrack().isNonnull() && mu.isTrackerMuon()) {
+      if (mu.innerTrack().isNonnull()) { //&& mu.isTrackerMuon()
         const reco::TrackRef innMu = mu.innerTrack();
 
         const reco::HitPattern& hitPat = innMu->hitPattern();
@@ -340,44 +342,6 @@ void MuonAnalyzer::analyze(const edm::Event& e, const edm::EventSetup& es) {
 
         innerNormChi2_.push_back(innMu->normalizedChi2());
 
-        // global muons, avoiding overlaps with inner track variables if possible
-        if (mu.globalTrack().isNonnull() && mu.isGlobalMuon()) {
-          const reco::TrackRef glbMu = mu.globalTrack();
-
-          nGlobal_++;
-
-          globalP_.push_back(glbMu->p());
-          globalPt_.push_back(glbMu->pt());
-          globalPtErr_.push_back(glbMu->ptError());
-          globalEta_.push_back(glbMu->eta());
-
-          globalIsArbitrated_.push_back(muon::isGoodMuon(mu, muon::selectionTypeFromString("TrackerMuonArbitrated")));
-
-          globalDxy_.push_back(glbMu->dxy(pv.position()));
-          globalDz_.push_back(glbMu->dz(pv.position()));
-          globalDxyErr_.push_back(glbMu->dxyError());
-          globalDzErr_.push_back(glbMu->dzError());
-
-          globalNormChi2_.push_back(glbMu->normalizedChi2());
-          globalNMuonHits_.push_back(glbMu->hitPattern().numberOfValidMuonHits());
-
-        } else {
-          globalP_.push_back(-99);
-          globalPt_.push_back(-99);
-          globalPtErr_.push_back(-99);
-          globalEta_.push_back(-99);
-
-          globalIsArbitrated_.push_back(false);
-
-          globalDxy_.push_back(-99);
-          globalDz_.push_back(-99);
-          globalDxyErr_.push_back(-99);
-          globalDzErr_.push_back(-99);
-
-          globalNormChi2_.push_back(-99);
-          globalNMuonHits_.push_back(-99);
-        }
-
       } else {
         innerDxy_.push_back(-99);
         innerDz_.push_back(-99);
@@ -399,12 +363,52 @@ void MuonAnalyzer::analyze(const edm::Event& e, const edm::EventSetup& es) {
         innerNormChi2_.push_back(-99);
       }
 
+      // global muons, avoiding overlaps with inner track variables if possible
+      if (mu.globalTrack().isNonnull() && mu.isGlobalMuon()) {
+        const reco::TrackRef glbMu = mu.globalTrack();
+
+        nGlobal_++;
+
+        globalP_.push_back(glbMu->p());
+        globalPt_.push_back(glbMu->pt());
+        globalPtErr_.push_back(glbMu->ptError());
+        globalEta_.push_back(glbMu->eta());
+
+        globalIsArbitrated_.push_back(muon::isGoodMuon(mu, muon::selectionTypeFromString("TrackerMuonArbitrated")));
+
+        globalDxy_.push_back(glbMu->dxy(pv.position()));
+        globalDz_.push_back(glbMu->dz(pv.position()));
+        globalDxyErr_.push_back(glbMu->dxyError());
+        globalDzErr_.push_back(glbMu->dzError());
+
+        globalNormChi2_.push_back(glbMu->normalizedChi2());
+        globalNMuonHits_.push_back(glbMu->hitPattern().numberOfValidMuonHits());
+
+      } else {
+        globalP_.push_back(-99);
+        globalPt_.push_back(-99);
+        globalPtErr_.push_back(-99);
+        globalEta_.push_back(-99);
+
+        globalIsArbitrated_.push_back(false);
+
+        globalDxy_.push_back(-99);
+        globalDz_.push_back(-99);
+        globalDxyErr_.push_back(-99);
+        globalDzErr_.push_back(-99);
+
+        globalNormChi2_.push_back(-99);
+        globalNMuonHits_.push_back(-99);
+      }
+
       recoNMatchedStations_.push_back(mu.numberOfMatchedStations());
       recoIsoTrk_.push_back(mu.isolationR03().sumPt);
       recoPFChIso_.push_back(mu.pfIsolationR04().sumChargedHadronPt);
       recoPFPhoIso_.push_back(mu.pfIsolationR04().sumPhotonEt);
       recoPFNeuIso_.push_back(mu.pfIsolationR04().sumNeutralHadronEt);
       recoPFPUIso_.push_back(mu.pfIsolationR04().sumPUPt);
+
+      recoIDHybridSoft_.push_back(mu.isGlobalMuon() && mu.isTrackerMuon() && mu.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5 && mu.innerTrack()->hitPattern().pixelLayersWithMeasurement() > 0 && fabs(mu.innerTrack()->dxy(pv.position())) < 0.3 && fabs(mu.innerTrack()->dz(pv.position())) < 20.);
 
       recoIDSoft_.push_back(mu.passed(reco::Muon::SoftMvaId));
       recoIDLoose_.push_back(mu.passed(reco::Muon::CutBasedIdLoose));

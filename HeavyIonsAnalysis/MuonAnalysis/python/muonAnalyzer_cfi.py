@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 muonAnalyzer = cms.EDAnalyzer("MuonAnalyzer",
-                           muonSrc = cms.InputTag("unpackedMuons"),
+                           muonSrc = cms.InputTag("slimmedMuons"), #ALERT
                            vertexSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
                            doReco = cms.untracked.bool(True),
                            doGen = cms.bool(False),

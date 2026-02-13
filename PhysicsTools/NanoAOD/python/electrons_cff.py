@@ -157,11 +157,11 @@ calibratedPatElectronsNano = RecoEgamma.EgammaTools.calibratedEgammas_cff.calibr
 
 #the second part is introduced to protect v8 since (run2_nanoAOD_106Xv1 & ~run2_nanoAOD_devel) is the v8 condition
 (run2_egamma_2016 & tracker_apv_vfp30_2016 & ~(run2_nanoAOD_106Xv1 & ~run2_nanoAOD_devel)).toModify(calibratedPatElectronsNano,
-    correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2016_UltraLegacy_preVFP_RunFineEtaR9Gain")
+    correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2016_UltraLegacy_preVFP_RunFineEtaR9Gain_v3")
 ) 
 
 (run2_egamma_2016 & ~tracker_apv_vfp30_2016 & ~(run2_nanoAOD_106Xv1 & ~run2_nanoAOD_devel)).toModify(calibratedPatElectronsNano,
-    correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2016_UltraLegacy_postVFP_RunFineEtaR9Gain")
+    correctionFile = cms.string("EgammaAnalysis/ElectronTools/data/ScalesSmearings/Run2016_UltraLegacy_postVFP_RunFineEtaR9Gain_v1")
 )
 
 run2_egamma_2017.toModify(calibratedPatElectronsNano,
@@ -469,19 +469,16 @@ run2_miniAOD_80XLegacy.toModify(electronTable.variables,
     vidNestedWPBitmapSum16 = Var("userInt('VIDNestedWPBitmapSum16')",int,doc=_bitmapVIDForEleSum16_docstring),
 
 )
-
-from PhysicsTools.NanoAOD.particlelevel_cff import particleLevel
-particleLevelForMatching = particleLevel.clone(
-    lepMinPt    = cms.double(3.),
-    phoMinPt = cms.double(3),
-)
+#############electron Table END#####################
+# Depends on particlelevel producer run in particlelevel_cff
 tautaggerForMatching = cms.EDProducer("GenJetTauTaggerProducer",
-                                      src = cms.InputTag('particleLevelForMatching:leptons')
+                                      src = cms.InputTag('particleLevel:leptons')
 )
 
 matchingElecPhoton = cms.EDProducer("GenJetGenPartMerger",
-                                    srcJet =cms.InputTag("particleLevelForMatching:leptons"),
-                                    srcPart=cms.InputTag("particleLevelForMatching:photons"),
+                                    srcJet =cms.InputTag("particleLevel:leptons"),
+                                    srcPart=cms.InputTag("particleLevel:photons"),
+                                    cut = cms.string("pt > 3"),
                                     hasTauAnc=cms.InputTag("tautaggerForMatching"),
 )
 
@@ -536,7 +533,7 @@ electronMCTable = cms.EDProducer("CandMCMatchTableProducer",
 electronSequence = cms.Sequence(bitmapVIDForEle + bitmapVIDForEleHEEP + isoForEle + ptRatioRelForEle + seedGainEle + slimmedElectronsWithUserData + finalElectrons)
 electronTables = cms.Sequence (electronMVATTH + electronTable)
 electronMCold = cms.Sequence(electronsMCMatchForTable + electronMCTable)
-electronMC = cms.Sequence(particleLevelForMatching + tautaggerForMatching + matchingElecPhoton + electronsMCMatchForTable + electronsMCMatchForTableAlt + electronMCTable)
+electronMC = cms.Sequence(tautaggerForMatching + matchingElecPhoton + electronsMCMatchForTable + electronsMCMatchForTableAlt + electronMCTable)
 ( run2_nanoAOD_106Xv1 & ~run2_nanoAOD_devel).toModify( electronMCTable,
                                                        mcMapDressedLep=None,
                                                        mcMap   = cms.InputTag("electronsMCMatchForTable"),
